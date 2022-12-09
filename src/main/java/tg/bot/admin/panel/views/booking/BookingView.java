@@ -25,8 +25,12 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.data.service.ClientService;
+import tg.bot.admin.panel.data.service.SellingItemService;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.DefaultValueProviders;
+import tg.bot.admin.panel.views.a.util.converter.StringToClientConverter;
+import tg.bot.admin.panel.views.a.util.converter.StringToSellingItemConverter;
 import tg.bot.core.domain.Booking;
 import tg.bot.admin.panel.data.service.BookingService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -54,10 +58,14 @@ public class BookingView extends Div implements BeforeEnterObserver {
     private Booking booking;
 
     private final BookingService bookingService;
+    private final ClientService clientService;
+    private final SellingItemService sellingItemService;
 
     @Autowired
-    public BookingView(BookingService bookingService) {
+    public BookingView(BookingService bookingService, ClientService clientService, SellingItemService sellingItemService) {
         this.bookingService = bookingService;
+        this.clientService = clientService;
+        this.sellingItemService = sellingItemService;
         addClassNames("booking-view");
 
         // Create UI
@@ -102,8 +110,12 @@ public class BookingView extends Div implements BeforeEnterObserver {
         // Bind fields. This is where you'd define e.g. validation rules
 
 //        binder.bindInstanceFields(this);
-        binder.bind(this.client, "client.id");
-        binder.bind(this.sellingItem, "sellingItem.id");
+        binder.forField(this.client)
+                .withConverter(new StringToClientConverter(this.clientService))
+                .bind(Booking::getClient, Booking::setClient);
+        binder.forField(this.sellingItem)
+                .withConverter(new StringToSellingItemConverter(this.sellingItemService))
+                .bind(Booking::getSellingItem, Booking::setSellingItem);
 
 
         cancel.addClickListener(e -> {

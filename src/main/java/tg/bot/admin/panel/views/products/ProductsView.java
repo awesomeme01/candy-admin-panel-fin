@@ -121,7 +121,7 @@ public class ProductsView extends Div implements BeforeEnterObserver {
         binder.bind(this.name, "name");
         binder.bind(this.code, "code");
         binder.forField(this.brand)
-                .withConverter(new StringToBrandConverter(brandService))
+                .withConverter(new StringToBrandConverter(this.brandService))
                 .bind(Product::getBrand, Product::setBrand);
         binder.bind(this.description, "description");
         binder.forField(this.price)

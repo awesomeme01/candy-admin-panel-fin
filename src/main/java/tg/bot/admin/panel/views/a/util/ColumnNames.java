@@ -34,4 +34,6 @@ public class ColumnNames {
     public static final String BOOKING_ID = "Booking Id";
     public static final String WEIGHT = "Weight";
     public static final String PRICE = "Price";
+    public static final String SURNAME = "Surname";
+    public static final String PHONE_NUMBER = "Phone Number";
 }

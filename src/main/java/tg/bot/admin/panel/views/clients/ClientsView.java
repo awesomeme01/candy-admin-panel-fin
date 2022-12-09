@@ -17,6 +17,8 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.converter.Converter;
+import com.vaadin.flow.data.converter.StringToBooleanConverter;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -28,9 +30,10 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import tg.bot.admin.panel.data.entity.SamplePerson;
-import tg.bot.admin.panel.data.service.SamplePersonService;
+import tg.bot.admin.panel.data.service.ClientService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.core.domain.Client;
 
 @PageTitle("Clients")
 @Route(value = "clients/:samplePersonID?/:action?(edit)", layout = MainLayout.class)
@@ -41,28 +44,28 @@ public class ClientsView extends Div implements BeforeEnterObserver {
     private final String SAMPLEPERSON_ID = "samplePersonID";
     private final String SAMPLEPERSON_EDIT_ROUTE_TEMPLATE = "clients/%s/edit";
 
-    private final Grid<SamplePerson> grid = new Grid<>(SamplePerson.class, false);
+    private final Grid<Client> grid = new Grid<>(Client.class, false);
 
     private TextField firstName;
     private TextField lastName;
     private TextField email;
     private TextField phone;
-    private DatePicker dateOfBirth;
-    private TextField occupation;
-    private Checkbox important;
+    private TextField username;
+    private DatePicker dateCreated;
+    private Checkbox isActive;
 
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
 
-    private final BeanValidationBinder<SamplePerson> binder;
+    private final BeanValidationBinder<Client> binder;
 
-    private SamplePerson samplePerson;
+    private Client samplePerson;
 
-    private final SamplePersonService samplePersonService;
+    private final ClientService clientService;
 
     @Autowired
-    public ClientsView(SamplePersonService samplePersonService) {
-        this.samplePersonService = samplePersonService;
+    public ClientsView(ClientService clientService) {
+        this.clientService = clientService;
         addClassNames("clients-view");
 
         // Create UI
@@ -74,22 +77,32 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("firstName").setAutoWidth(true);
-        grid.addColumn("lastName").setAutoWidth(true);
-        grid.addColumn("email").setAutoWidth(true);
-        grid.addColumn("phone").setAutoWidth(true);
-        grid.addColumn("dateOfBirth").setAutoWidth(true);
-        grid.addColumn("occupation").setAutoWidth(true);
-        LitRenderer<SamplePerson> importantRenderer = LitRenderer.<SamplePerson>of(
+        grid.addColumn(Client::getName)
+                .setHeader(ColumnNames.NAME)
+                .setAutoWidth(true);
+        grid.addColumn(Client::getSurname)
+                .setHeader(ColumnNames.SURNAME)
+                .setAutoWidth(true);
+        grid.addColumn(Client::getUsername)
+                .setHeader(ColumnNames.USERNAME)
+                .setAutoWidth(true);
+        grid.addColumn(Client::getPhoneNumber)
+                .setHeader(ColumnNames.PHONE_NUMBER)
+                .setAutoWidth(true);
+        grid.addColumn(Client::getDateCreated)
+                .setHeader(ColumnNames.DATE_CREATED)
+                .setAutoWidth(true);
+
+        LitRenderer<Client> importantRenderer = LitRenderer.<Client>of(
                 "<vaadin-icon icon='vaadin:${item.icon}' style='width: var(--lumo-icon-size-s); height: var(--lumo-icon-size-s); color: ${item.color};'></vaadin-icon>")
-                .withProperty("icon", important -> important.isImportant() ? "check" : "minus").withProperty("color",
-                        important -> important.isImportant()
+                .withProperty("icon", important -> important.getIsActive() ? "check" : "minus").withProperty("color",
+                        important -> important.getIsActive()
                                 ? "var(--lumo-primary-text-color)"
                                 : "var(--lumo-disabled-text-color)");
 
         grid.addColumn(importantRenderer).setHeader("Important").setAutoWidth(true);
 
-        grid.setItems(query -> samplePersonService.list(
+        grid.setItems(query -> clientService.list(
                 PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
@@ -105,11 +118,18 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         });
 
         // Configure Form
-        binder = new BeanValidationBinder<>(SamplePerson.class);
+        binder = new BeanValidationBinder<>(Client.class);
 
         // Bind fields. This is where you'd define e.g. validation rules
 
-        binder.bindInstanceFields(this);
+        binder.bind(this.firstName, "name");
+        binder.bind(this.lastName, "surname");
+        binder.bind(this.username, "username");
+        binder.bind(this.phone, "phoneNumber");
+        binder.bind(this.dateCreated, "dateCreated");
+        binder.forField(this.isActive)
+                .withConverter(new StringToBooleanConverter("Activity status must be boolean"))
+                .bind(Client::getIsActive, Client::setIsActive);
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -119,13 +139,13 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         save.addClickListener(e -> {
             try {
                 if (this.samplePerson == null) {
-                    this.samplePerson = new SamplePerson();
+                    this.samplePerson = new Client();
                 }
                 binder.writeBean(this.samplePerson);
-                samplePersonService.update(this.samplePerson);
+                clientService.update(this.samplePerson);
                 clearForm();
                 refreshGrid();
-                Notification.show("SamplePerson details stored.");
+                Notification.show("Client details stored.");
                 UI.getCurrent().navigate(ClientsView.class);
             } catch (ValidationException validationException) {
                 Notification.show("An exception happened while trying to store the samplePerson details.");
@@ -138,7 +158,7 @@ public class ClientsView extends Div implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         Optional<Long> samplePersonId = event.getRouteParameters().get(SAMPLEPERSON_ID).map(Long::parseLong);
         if (samplePersonId.isPresent()) {
-            Optional<SamplePerson> samplePersonFromBackend = samplePersonService.get(samplePersonId.get());
+            Optional<Client> samplePersonFromBackend = clientService.get(samplePersonId.get());
             if (samplePersonFromBackend.isPresent()) {
                 populateForm(samplePersonFromBackend.get());
             } else {
@@ -166,10 +186,10 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         lastName = new TextField("Last Name");
         email = new TextField("Email");
         phone = new TextField("Phone");
-        dateOfBirth = new DatePicker("Date Of Birth");
-        occupation = new TextField("Occupation");
-        important = new Checkbox("Important");
-        formLayout.add(firstName, lastName, email, phone, dateOfBirth, occupation, important);
+        dateCreated = new DatePicker("Date Created");
+        username = new TextField("Username");
+        isActive = new Checkbox("Is Active");
+        formLayout.add(firstName, lastName, email, username, phone, dateCreated, isActive);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);
@@ -202,7 +222,7 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         populateForm(null);
     }
 
-    private void populateForm(SamplePerson value) {
+    private void populateForm(Client value) {
         this.samplePerson = value;
         binder.readBean(this.samplePerson);
 
