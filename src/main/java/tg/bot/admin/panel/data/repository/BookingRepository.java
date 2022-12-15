@@ -1,4 +1,4 @@
-package tg.bot.admin.panel.data.service;
+package tg.bot.admin.panel.data.repository;
 
 
 import org.springframework.data.jpa.repository.JpaRepository;

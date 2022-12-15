@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import tg.bot.admin.panel.data.entity.User;
-import tg.bot.admin.panel.data.service.UserRepository;
+import tg.bot.admin.panel.data.repository.UserRepository;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {

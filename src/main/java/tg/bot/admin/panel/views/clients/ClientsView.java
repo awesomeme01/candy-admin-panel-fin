@@ -5,6 +5,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -25,6 +26,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.annotation.security.RolesAllowed;
@@ -34,6 +37,7 @@ import tg.bot.admin.panel.data.service.ClientService;
 import tg.bot.admin.panel.views.MainLayout;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.core.domain.Client;
+import tg.bot.core.domain.base.AbstractAuditableEntity;
 
 @PageTitle("Clients")
 @Route(value = "clients/:samplePersonID?/:action?(edit)", layout = MainLayout.class)
@@ -51,7 +55,7 @@ public class ClientsView extends Div implements BeforeEnterObserver {
     private TextField email;
     private TextField phone;
     private TextField username;
-    private DatePicker dateCreated;
+    private DateTimePicker dateCreated;
     private Checkbox isActive;
 
     private final Button cancel = new Button("Cancel");
@@ -77,6 +81,9 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
+        grid.addColumn(AbstractAuditableEntity::getId)
+                .setHeader(ColumnNames.ID)
+                .setAutoWidth(true);
         grid.addColumn(Client::getName)
                 .setHeader(ColumnNames.NAME)
                 .setAutoWidth(true);
@@ -127,9 +134,7 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         binder.bind(this.username, "username");
         binder.bind(this.phone, "phoneNumber");
         binder.bind(this.dateCreated, "dateCreated");
-        binder.forField(this.isActive)
-                .withConverter(new StringToBooleanConverter("Activity status must be boolean"))
-                .bind(Client::getIsActive, Client::setIsActive);
+        binder.bind(this.isActive, "isActive");
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -186,7 +191,7 @@ public class ClientsView extends Div implements BeforeEnterObserver {
         lastName = new TextField("Last Name");
         email = new TextField("Email");
         phone = new TextField("Phone");
-        dateCreated = new DatePicker("Date Created");
+        dateCreated = new DateTimePicker("Date Created");
         username = new TextField("Username");
         isActive = new Checkbox("Is Active");
         formLayout.add(firstName, lastName, email, username, phone, dateCreated, isActive);

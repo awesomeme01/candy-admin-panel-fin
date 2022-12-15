@@ -23,9 +23,11 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+
 import java.util.Optional;
 
 import javax.annotation.security.RolesAllowed;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
@@ -72,6 +74,9 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
         add(splitLayout);
 
         // Configure Grid
+        grid.addColumn(MessageKeyboardButton::getId)
+                .setHeader(ColumnNames.ID)
+                .setAutoWidth(true);
         grid.addColumn(c -> c.getKeyboard().getId())
                 .setHeader("Keyboard Id")
                 .setAutoWidth(true);

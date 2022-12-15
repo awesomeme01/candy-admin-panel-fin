@@ -36,4 +36,5 @@ public class ColumnNames {
     public static final String PRICE = "Price";
     public static final String SURNAME = "Surname";
     public static final String PHONE_NUMBER = "Phone Number";
+    public static final String PRODUCT = "Product";
 }

@@ -3,9 +3,8 @@ package tg.bot.admin.panel.data.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import tg.bot.core.domain.Brand;
+import tg.bot.admin.panel.data.repository.ClientRepository;
 import tg.bot.core.domain.Client;
-import tg.bot.core.repository.ClientRepository;
 
 import java.util.Optional;
 
@@ -19,8 +18,8 @@ public class ClientService {
     }
 
 
-    public Optional<Client> findByName(String name) {
-        return Optional.ofNullable(this.repository.findByUsername(name));
+    public Optional<Client> findByUsername(String name) {
+        return Optional.ofNullable(this.repository.findClientByUsername(name));
     }
 
     public Optional<Client> get(Long id) {

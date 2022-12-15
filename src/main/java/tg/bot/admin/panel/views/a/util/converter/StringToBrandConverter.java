@@ -27,6 +27,6 @@ public class StringToBrandConverter implements Converter<String, Brand> {
 
     @Override
     public String convertToPresentation(Brand brand, ValueContext valueContext) {
-        return brand.getName();
+        return brand != null ? brand.getName() : null;
     }
 }

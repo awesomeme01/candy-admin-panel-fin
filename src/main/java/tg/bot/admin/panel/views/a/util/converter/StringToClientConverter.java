@@ -18,12 +18,12 @@ public class StringToClientConverter implements Converter<String, Client> {
 
     @Override
     public Result<Client> convertToModel(String s, ValueContext valueContext) {
-        return Result.ok(this.clientService.findByName(s)
-                .orElseThrow(() -> new EntityNotFoundException("Client not found for name " + s)));
+        return Result.ok(this.clientService.findByUsername(s)
+                .orElseThrow(() -> new EntityNotFoundException("Client not found for username " + s)));
     }
 
     @Override
     public String convertToPresentation(Client client, ValueContext valueContext) {
-        return client.getUsername();
+        return client != null ? client.getUsername() : null;
     }
 }

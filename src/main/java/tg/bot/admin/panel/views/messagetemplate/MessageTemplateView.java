@@ -24,6 +24,7 @@ import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.core.domain.base.AbstractAuditableEntity;
 import tg.bot.domain.entity.MessageResponseTemplate;
 import tg.bot.admin.panel.data.service.MessageResponseTemplateService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -67,6 +68,9 @@ public class MessageTemplateView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
+        grid.addColumn(MessageResponseTemplate::getId)
+                .setHeader(ColumnNames.ID)
+                .setAutoWidth(true);
         grid.addColumn(MessageResponseTemplate::getMessage)
                 .setHeader(ColumnNames.MESSAGE)
                 .setAutoWidth(true);

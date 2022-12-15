@@ -77,6 +77,9 @@ public class ProductsView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
+        grid.addColumn(AbstractAuditableEntity::getId)
+                .setHeader(ColumnNames.ID)
+                .setAutoWidth(true);
         grid.addColumn(Product::getName)
                 .setHeader(ColumnNames.NAME)
                 .setAutoWidth(true);

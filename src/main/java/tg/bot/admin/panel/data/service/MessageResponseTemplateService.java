@@ -8,10 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tg.bot.admin.panel.data.repository.MessageResponseTemplateRepository;
 import tg.bot.domain.entity.MessageResponseTemplate;
 
 @Service
-@Transactional(propagation = Propagation.REQUIRED)
 public class MessageResponseTemplateService {
 
     private final MessageResponseTemplateRepository repository;

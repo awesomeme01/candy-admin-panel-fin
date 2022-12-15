@@ -23,6 +23,6 @@ public class StringToSellingItemConverter implements Converter<String, SellingIt
 
     @Override
     public String convertToPresentation(SellingItem sellingItem, ValueContext valueContext) {
-        return sellingItem.getId().toString();
+        return sellingItem != null ? sellingItem.getId().toString() : null;
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Component;
 import tg.bot.admin.panel.data.entity.User;
-import tg.bot.admin.panel.data.service.UserRepository;
+import tg.bot.admin.panel.data.repository.UserRepository;
 
 @Component
 public class AuthenticatedUser {

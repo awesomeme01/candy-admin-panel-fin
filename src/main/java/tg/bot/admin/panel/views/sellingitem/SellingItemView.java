@@ -102,10 +102,13 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
                 });
         grid.addColumn(pictureRenderer).setHeader("Picture").setWidth("68px").setFlexGrow(0);
 
-        grid.addColumn(p -> p.getProduct().getName())
-                .setHeader(ColumnNames.NAME)
+        grid.addColumn(AbstractAuditableEntity::getId)
+                .setHeader(ColumnNames.ID)
                 .setAutoWidth(true);
-        grid.addColumn(p -> p.getBooking().getClient().getName())
+        grid.addColumn(p -> p.getProduct().getName())
+                .setHeader(ColumnNames.PRODUCT)
+                .setAutoWidth(true);
+        grid.addColumn(p -> p.getBooking() != null ? p.getBooking().getClient().getName() : null)
                 .setHeader(ColumnNames.BOOKING_ID)
                 .setAutoWidth(true);
         grid.addColumn(SellingItem::getWeight)
@@ -136,15 +139,12 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
         // Configure Form
         binder = new BeanValidationBinder<>(SellingItem.class);
 
-        // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(weight).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("weight");
-        binder.forField(price).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("price");
-
 //        binder.bindInstanceFields(this);
         binder.forField(this.product)
                 .withConverter(new StringToProductConverter(productService))
                 .bind(SellingItem::getProduct, SellingItem::setProduct);
         binder.forField(this.bookedBy)
+                .withNullRepresentation("Available")
                 .withConverter(new StringToBookingConverter(bookingService))
                 .bind(SellingItem::getBooking, SellingItem::setBooking);
         binder.forField(this.weight)
@@ -215,8 +215,8 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
         picture = new Upload();
         picture.getStyle().set("box-sizing", "border-box");
         picture.getElement().appendChild(picturePreview.getElement());
-        product = new TextField("Product");
-        bookedBy = new TextField("Booking Id");
+        product = new TextField("Product", "Enter product code");
+        bookedBy = new TextField("Booking Id", "Enter booking id");
         weight = new TextField("Weight");
         price = new TextField("Price");
         dateCreated = new DateTimePicker("Date Created");

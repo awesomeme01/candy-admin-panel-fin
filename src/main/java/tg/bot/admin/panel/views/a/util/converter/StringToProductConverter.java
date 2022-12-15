@@ -27,6 +27,6 @@ public class StringToProductConverter implements Converter<String, Product> {
 
     @Override
     public String convertToPresentation(Product product, ValueContext valueContext) {
-        return product.getCode();
+        return product != null ? product.getCode() : null;
     }
 }

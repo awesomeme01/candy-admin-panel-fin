@@ -8,10 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tg.bot.admin.panel.data.repository.PrincipalRoleRepository;
 import tg.bot.core.domain.PrincipalRole;
 
 @Service
-@Transactional(propagation = Propagation.REQUIRED)
 public class PrincipalRoleService {
 
     private final PrincipalRoleRepository repository;

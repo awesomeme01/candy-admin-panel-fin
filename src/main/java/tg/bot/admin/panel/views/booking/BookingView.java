@@ -168,8 +168,8 @@ public class BookingView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        client = new TextField(ColumnNames.CLIENT);
-        sellingItem = new TextField(ColumnNames.SELLING_ITEM);
+        client = new TextField(ColumnNames.CLIENT, "Enter client's username");
+        sellingItem = new TextField(ColumnNames.SELLING_ITEM, "Enter selling item's id");
         dateCreated = new DateTimePicker(ColumnNames.DATE_CREATED);
         dateCreated.setStep(Duration.ofSeconds(1));
         formLayout.add(client, sellingItem, dateCreated);

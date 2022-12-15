@@ -28,6 +28,6 @@ public class StringToBookingConverter implements Converter<String, Booking> {
 
     @Override
     public String convertToPresentation(Booking booking, ValueContext valueContext) {
-        return booking.getId().toString();
+        return booking != null ? booking.getId().toString() : null;
     }
 }

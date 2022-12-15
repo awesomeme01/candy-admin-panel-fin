@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.sql.init.SqlDataSourceScriptDatabaseInitializer;
 import org.springframework.boot.autoconfigure.sql.init.SqlInitializationProperties;
 import org.springframework.context.annotation.Bean;
-import tg.bot.admin.panel.data.service.SamplePersonRepository;
 
 /**
  * The entry point of the Spring Boot application.
@@ -21,7 +20,6 @@ import tg.bot.admin.panel.data.service.SamplePersonRepository;
  *
  */
 @SpringBootApplication
-@EntityScan(basePackages = {"tg.bot.domain.entity", "tg.bot.core.domain", "tg.bot.admin.panel.data.entity"})
 @Theme(value = "adminpanel")
 @PWA(name = "Admin Panel", shortName = "Admin Panel", offlineResources = {})
 @NpmPackage(value = "line-awesome", version = "1.3.0")
