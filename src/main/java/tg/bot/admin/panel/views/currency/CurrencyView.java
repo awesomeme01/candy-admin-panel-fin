@@ -13,22 +13,23 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.data.converter.StringToIntegerConverter;
+import com.vaadin.flow.data.converter.StringToDoubleConverter;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import java.util.Optional;
-
-import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import tg.bot.admin.panel.views.a.util.ColumnNames;
-import tg.bot.core.domain.Currency;
 import tg.bot.admin.panel.data.service.CurrencyService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.admin.panel.views.a.util.converter.StringToMoneyTypeConverter;
+import tg.bot.core.domain.Currency;
 import tg.bot.core.domain.base.AbstractAuditableEntity;
+
+import javax.annotation.security.RolesAllowed;
+import java.util.Optional;
 
 @PageTitle("Currency")
 @Route(value = "currency/:currencyID?/:action?(edit)", layout = MainLayout.class)
@@ -39,20 +40,15 @@ public class CurrencyView extends Div implements BeforeEnterObserver {
     private final String CURRENCY_EDIT_ROUTE_TEMPLATE = "currency/%s/edit";
 
     private final Grid<Currency> grid = new Grid<>(Currency.class, false);
-
+    private final Button cancel = new Button("Cancel");
+    private final Button save = new Button("Save");
+    private final BeanValidationBinder<Currency> binder;
+    private final CurrencyService currencyService;
     private TextField name;
     private TextField code;
     private TextField type;
     private TextField amountInUsd;
-
-    private final Button cancel = new Button("Cancel");
-    private final Button save = new Button("Save");
-
-    private final BeanValidationBinder<Currency> binder;
-
     private Currency currency;
-
-    private final CurrencyService currencyService;
 
     @Autowired
     public CurrencyView(CurrencyService currencyService) {
@@ -103,10 +99,17 @@ public class CurrencyView extends Div implements BeforeEnterObserver {
         binder = new BeanValidationBinder<>(Currency.class);
 
         // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(amountInUsd).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
+        binder.forField(amountInUsd).withConverter(new StringToDoubleConverter("Only Double numbers are allowed"))
                 .bind("amountInUsd");
-
-        binder.bindInstanceFields(this);
+//        private TextField name;
+//        private TextField code;
+//        private TextField type;
+//        private TextField amountInUsd;
+        binder.bind(name, "name");
+        binder.bind(code, "code");
+        binder.forField(type).withConverter(new StringToMoneyTypeConverter())
+                .bind(Currency::getType, Currency::setType);
+//        binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
             clearForm();

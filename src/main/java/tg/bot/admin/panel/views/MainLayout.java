@@ -11,6 +11,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.router.PageTitle;
@@ -82,60 +83,74 @@ public class MainLayout extends AppLayout {
         // AppNav is not yet an official component.
         // For documentation, visit https://github.com/vaadin/vcf-nav#readme
         AppNav nav = new AppNav();
+        AppNavItem catalogGroup = new AppNavItem("Catalog");
+        catalogGroup.setExpanded(true);
+
+        AppNavItem systemGroup = new AppNavItem("System");
+        systemGroup.setExpanded(true);
+
+        AppNavItem ordersGroup = new AppNavItem("Orders");
+        ordersGroup.setExpanded(true);
+
+        AppNavItem messageGroup = new AppNavItem("Telegram Messages");
+        messageGroup.setExpanded(true);
 
         if (accessChecker.hasAccess(BrandsView.class)) {
-            nav.addItem(new AppNavItem("Brands", BrandsView.class, "la la-tag"));
+            catalogGroup.addItem(new AppNavItem("Brands", BrandsView.class, "la la-tag"));
 
         }
         if (accessChecker.hasAccess(ProductsView.class)) {
-            nav.addItem(new AppNavItem("Products", ProductsView.class, "lab la-envira"));
+            catalogGroup.addItem(new AppNavItem("Products", ProductsView.class, "la la-envira"));
 
         }
         if (accessChecker.hasAccess(SellingItemView.class)) {
-            nav.addItem(new AppNavItem("Selling Item", SellingItemView.class, "la la-folder"));
+            catalogGroup.addItem(new AppNavItem("Selling Item", SellingItemView.class, "la la-folder"));
 
         }
         if (accessChecker.hasAccess(BookingView.class)) {
-            nav.addItem(new AppNavItem("Booking", BookingView.class, "la la-columns"));
+            ordersGroup.addItem(new AppNavItem("Booking", BookingView.class, "la la-columns"));
 
         }
         if (accessChecker.hasAccess(ClientsView.class)) {
-            nav.addItem(new AppNavItem("Clients", ClientsView.class, "la la-user"));
+            ordersGroup.addItem(new AppNavItem("Clients", ClientsView.class, "la la-user"));
 
         }
         if (accessChecker.hasAccess(PaymentsView.class)) {
-            nav.addItem(new AppNavItem("Payments", PaymentsView.class, "la la-dollar-sign"));
+            ordersGroup.addItem(new AppNavItem("Payments", PaymentsView.class, "la la-dollar-sign"));
 
         }
         if (accessChecker.hasAccess(OrdersView.class)) {
-            nav.addItem(new AppNavItem("Orders", OrdersView.class, "la la-dolly"));
+            ordersGroup.addItem(new AppNavItem("Orders", OrdersView.class, "la la-dolly"));
 
         }
         if (accessChecker.hasAccess(CurrencyView.class)) {
-            nav.addItem(new AppNavItem("Currency", CurrencyView.class, "la la-comment-dollar"));
+            ordersGroup.addItem(new AppNavItem("Currency", CurrencyView.class, "la la-comment-dollar"));
 
         }
         if (accessChecker.hasAccess(MessageTemplateView.class)) {
-            nav.addItem(new AppNavItem("Message Template", MessageTemplateView.class, "lab la-facebook-messenger"));
+            messageGroup.addItem(new AppNavItem("Message Template", MessageTemplateView.class, "lab la-facebook-messenger"));
 
         }
         if (accessChecker.hasAccess(MessageKeyboardView.class)) {
-            nav.addItem(new AppNavItem("Message Keyboard", MessageKeyboardView.class, "la la-keyboard"));
+            messageGroup.addItem(new AppNavItem("Message Keyboard", MessageKeyboardView.class, "la la-keyboard"));
 
         }
         if (accessChecker.hasAccess(MessageKeyboardButtonView.class)) {
-            nav.addItem(new AppNavItem("Message Keyboard Button", MessageKeyboardButtonView.class, "la la-keyboard"));
+            messageGroup.addItem(new AppNavItem("Message Keyboard Button", MessageKeyboardButtonView.class, "la la-keyboard"));
 
         }
         if (accessChecker.hasAccess(PrincipalView.class)) {
-            nav.addItem(new AppNavItem("Principal", PrincipalView.class, "la la-user-lock"));
+            systemGroup.addItem(new AppNavItem("Principal", PrincipalView.class, "la la-user-lock"));
 
         }
         if (accessChecker.hasAccess(PrincipalRoleView.class)) {
-            nav.addItem(new AppNavItem("Principal Role", PrincipalRoleView.class, "la la-lock"));
+            systemGroup.addItem(new AppNavItem("Principal Role", PrincipalRoleView.class, "la la-lock"));
 
         }
-
+        nav.addItem(catalogGroup);
+        nav.addItem(ordersGroup);
+        nav.addItem(messageGroup);
+        nav.addItem(systemGroup);
         return nav;
     }
 

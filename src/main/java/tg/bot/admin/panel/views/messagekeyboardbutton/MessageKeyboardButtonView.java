@@ -16,7 +16,6 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -30,7 +29,9 @@ import javax.annotation.security.RolesAllowed;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.data.service.MessageKeyboardService;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.admin.panel.views.a.util.converter.StringToMessageKeyboardConverter;
 import tg.bot.domain.entity.MessageKeyboardButton;
 import tg.bot.admin.panel.data.service.MessageKeyboardButtonService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -45,8 +46,9 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
     private final String MESSAGEKEYBOARDBUTTON_EDIT_ROUTE_TEMPLATE = "messageKeyboardButton/%s/edit";
 
     private final Grid<MessageKeyboardButton> grid = new Grid<>(MessageKeyboardButton.class, false);
+    private final MessageKeyboardService messageKeyboardService;
 
-    private TextField keyboardId;
+    private TextField keyboard;
     private TextField label;
     private TextField url;
     private Checkbox isActive;
@@ -61,7 +63,8 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
     private final MessageKeyboardButtonService messageKeyboardButtonService;
 
     @Autowired
-    public MessageKeyboardButtonView(MessageKeyboardButtonService messageKeyboardButtonService) {
+    public MessageKeyboardButtonView(MessageKeyboardService messageKeyboardService, MessageKeyboardButtonService messageKeyboardButtonService) {
+        this.messageKeyboardService = messageKeyboardService;
         this.messageKeyboardButtonService = messageKeyboardButtonService;
         addClassNames("message-keyboard-button-view");
 
@@ -115,10 +118,17 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
         binder = new BeanValidationBinder<>(MessageKeyboardButton.class);
 
         // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(keyboardId).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("keyboardId");
+        //    private TextField label;
+        //    private TextField url;
+        //    private Checkbox isActive;
+        binder.forField(keyboard)
+                .withConverter(new StringToMessageKeyboardConverter(this.messageKeyboardService))
+                .bind(MessageKeyboardButton::getKeyboard, MessageKeyboardButton::setKeyboard);
+        binder.bind(label, "label");
+        binder.bind(url, "url");
+        binder.bind(isActive, "isActive");
 
-        binder.bindInstanceFields(this);
+//        binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -172,11 +182,11 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        keyboardId = new TextField("Keyboard Id");
+        keyboard = new TextField("Keyboard Id");
         label = new TextField("Label");
         url = new TextField("Url");
         isActive = new Checkbox("Is Active");
-        formLayout.add(keyboardId, label, url, isActive);
+        formLayout.add(keyboard, label, url, isActive);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);

@@ -23,7 +23,9 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.data.service.PrincipalService;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.admin.panel.views.a.util.converter.StringToPrincipalConverter;
 import tg.bot.core.domain.PrincipalRole;
 import tg.bot.admin.panel.data.service.PrincipalRoleService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -37,6 +39,7 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
     private final String PRINCIPALROLE_EDIT_ROUTE_TEMPLATE = "principalRole/%s/edit";
 
     private final Grid<PrincipalRole> grid = new Grid<>(PrincipalRole.class, false);
+    private final PrincipalService principalService;
 
     private TextField role;
     private TextField principal;
@@ -51,7 +54,8 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
     private final PrincipalRoleService principalRoleService;
 
     @Autowired
-    public PrincipalRoleView(PrincipalRoleService principalRoleService) {
+    public PrincipalRoleView(PrincipalService principalService, PrincipalRoleService principalRoleService) {
+        this.principalService = principalService;
         this.principalRoleService = principalRoleService;
         addClassNames("principal-role-view");
 
@@ -89,7 +93,11 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
 
         // Bind fields. This is where you'd define e.g. validation rules
 
-        binder.bindInstanceFields(this);
+//        binder.bindInstanceFields(this);
+        binder.forField(principal)
+                        .withConverter(new StringToPrincipalConverter(this.principalService))
+                                .bind(PrincipalRole::getPrincipal, PrincipalRole::setPrincipal);
+        binder.bind(role, "role");
 
         cancel.addClickListener(e -> {
             clearForm();

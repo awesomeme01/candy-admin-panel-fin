@@ -20,18 +20,25 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import java.time.Duration;
-import java.util.Optional;
-
-import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.data.service.ClientService;
+import tg.bot.admin.panel.data.service.OrderService;
+import tg.bot.admin.panel.data.service.PaymentService;
+import tg.bot.admin.panel.data.service.SellingItemService;
+import tg.bot.admin.panel.views.MainLayout;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.DefaultValueProviders;
+import tg.bot.admin.panel.views.a.util.converter.StringToClientConverter;
+import tg.bot.admin.panel.views.a.util.converter.StringToOrderStatusConverter;
+import tg.bot.admin.panel.views.a.util.converter.StringToPaymentConverter;
+import tg.bot.admin.panel.views.a.util.converter.StringToSellingItemConverter;
 import tg.bot.core.domain.Order;
-import tg.bot.admin.panel.data.service.OrderService;
-import tg.bot.admin.panel.views.MainLayout;
 import tg.bot.core.domain.base.AbstractAuditableEntity;
+
+import javax.annotation.security.RolesAllowed;
+import java.time.Duration;
+import java.util.Optional;
 
 @PageTitle("Orders")
 @Route(value = "orders/:orderID?/:action?(edit)", layout = MainLayout.class)
@@ -42,25 +49,26 @@ public class OrdersView extends Div implements BeforeEnterObserver {
     private final String ORDER_EDIT_ROUTE_TEMPLATE = "orders/%s/edit";
 
     private final Grid<Order> grid = new Grid<>(Order.class, false);
-
+    private final Button cancel = new Button("Cancel");
+    private final Button save = new Button("Save");
+    private final BeanValidationBinder<Order> binder;
+    private final OrderService orderService;
+    private final SellingItemService sellingItemService;
+    private final ClientService clientService;
+    private final PaymentService paymentService;
     private TextField sellingItem;
     private TextField orderedBy;
     private TextField status;
     private TextField payment;
     private DateTimePicker dateCreated;
-
-    private final Button cancel = new Button("Cancel");
-    private final Button save = new Button("Save");
-
-    private final BeanValidationBinder<Order> binder;
-
     private Order order;
 
-    private final OrderService orderService;
-
     @Autowired
-    public OrdersView(OrderService orderService) {
+    public OrdersView(OrderService orderService, SellingItemService sellingItemService, ClientService clientService, PaymentService paymentService) {
         this.orderService = orderService;
+        this.sellingItemService = sellingItemService;
+        this.clientService = clientService;
+        this.paymentService = paymentService;
         addClassNames("orders-view");
 
         // Create UI
@@ -105,11 +113,28 @@ public class OrdersView extends Div implements BeforeEnterObserver {
         // Configure Form
         binder = new BeanValidationBinder<>(Order.class);
 
+        //    private TextField sellingItem;
+        //    private TextField orderedBy;
+        //    private TextField status;
+        //    private TextField payment;
+        //    private DateTimePicker dateCreated;
         // Bind fields. This is where you'd define e.g. validation rules
         binder.forField(payment).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
                 .bind("payment");
-
-        binder.bindInstanceFields(this);
+        binder.forField(sellingItem)
+                .withConverter(new StringToSellingItemConverter(this.sellingItemService))
+                .bind(Order::getSellingItem, Order::setSellingItem);
+        binder.forField(orderedBy)
+                .withConverter(new StringToClientConverter(this.clientService))
+                .bind(Order::getClient, Order::setClient);
+        binder.forField(status)
+                .withConverter(new StringToOrderStatusConverter())
+                .bind(Order::getStatus, Order::setStatus);
+        binder.forField(payment)
+                .withConverter(new StringToPaymentConverter(this.paymentService))
+                .bind(Order::getPayment, Order::setPayment);
+        binder.bind(this.dateCreated, "dateCreated");
+//        binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -161,11 +186,11 @@ public class OrdersView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        sellingItem = new TextField("Selling Item");
-        orderedBy = new TextField("Ordered By");
-        status = new TextField("Status");
-        payment = new TextField("Payment");
-        dateCreated = new DateTimePicker("Date Created");
+        sellingItem = new TextField(ColumnNames.SELLING_ITEM, "Enter selling item id");
+        orderedBy = new TextField(ColumnNames.ORDERED_BY, "Enter client's username");
+        status = new TextField(ColumnNames.STATUS, "Enter order status");
+        payment = new TextField(ColumnNames.PAYMENT, "Enter payment id");
+        dateCreated = new DateTimePicker(ColumnNames.DATE_CREATED);
         dateCreated.setStep(Duration.ofSeconds(1));
         formLayout.add(sellingItem, orderedBy, status, payment, dateCreated);
 

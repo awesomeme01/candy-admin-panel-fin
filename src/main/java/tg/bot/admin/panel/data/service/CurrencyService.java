@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import tg.bot.admin.panel.data.repository.CurrencyRepository;
 import tg.bot.core.domain.Currency;
 
+import javax.persistence.EntityNotFoundException;
+
 @Service
 public class CurrencyService {
 
@@ -19,6 +21,11 @@ public class CurrencyService {
     @Autowired
     public CurrencyService(CurrencyRepository repository) {
         this.repository = repository;
+    }
+
+    public Currency findByCode(String code) {
+        return repository.findCurrencyByCode(code)
+                .orElseThrow(() -> new EntityNotFoundException("Couldn't find Currency by code = " + code));
     }
 
     public Optional<Currency> get(Long id) {

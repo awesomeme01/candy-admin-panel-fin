@@ -13,6 +13,7 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.converter.StringToDoubleConverter;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -24,7 +25,11 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.data.service.ClientService;
+import tg.bot.admin.panel.data.service.CurrencyService;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.admin.panel.views.a.util.converter.StringToClientConverter;
+import tg.bot.admin.panel.views.a.util.converter.StringToCurrencyConverter;
 import tg.bot.core.domain.Payment;
 import tg.bot.admin.panel.data.service.PaymentService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -52,10 +57,14 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
     private Payment payment;
 
     private final PaymentService paymentService;
+    private final ClientService clientService;
+    private final CurrencyService currencyService;
 
     @Autowired
-    public PaymentsView(PaymentService paymentService) {
+    public PaymentsView(PaymentService paymentService, ClientService clientService, CurrencyService currencyService) {
         this.paymentService = paymentService;
+        this.clientService = clientService;
+        this.currencyService = currencyService;
         addClassNames("payments-view");
 
         // Create UI
@@ -68,7 +77,7 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
 
         // Configure Grid
         grid.addColumn(c -> c.getClient().getName())
-                .setHeader(ColumnNames.NAME)
+                .setHeader(ColumnNames.CLIENT)
                 .setAutoWidth(true);
         grid.addColumn(c -> c.getOrder().getId())
                 .setHeader(ColumnNames.ORDER_ID)
@@ -96,13 +105,18 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
 
         // Configure Form
         binder = new BeanValidationBinder<>(Payment.class);
-
         // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(orderId).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("orderId");
-        binder.forField(amount).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("amount");
-
-        binder.bindInstanceFields(this);
+        binder.forField(orderId)
+                .withConverter(new StringToIntegerConverter("Only numbers are allowed"))
+                .bind("order.id");
+        binder.forField(amount)
+                .withConverter(new StringToDoubleConverter("Only numbers are allowed")).bind("amount");
+        binder.forField(user)
+                .withConverter(new StringToClientConverter(this.clientService))
+                .bind(Payment::getClient, Payment::setClient);
+        binder.forField(currency)
+                .withConverter(new StringToCurrencyConverter(this.currencyService))
+                        .bind(Payment::getCurrency, Payment::setCurrency);
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -155,10 +169,10 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        user = new TextField("User");
-        orderId = new TextField("Order Id");
-        amount = new TextField("Amount");
-        currency = new TextField("Currency");
+        user = new TextField(ColumnNames.CLIENT, "Enter username of client");
+        orderId = new TextField(ColumnNames.ORDER_ID, "Enter order id");
+        amount = new TextField(ColumnNames.AMOUNT, "Enter amount");
+        currency = new TextField(ColumnNames.CURRENCY, "Enter currency code");
         formLayout.add(user, orderId, amount, currency);
 
         editorDiv.add(formLayout);

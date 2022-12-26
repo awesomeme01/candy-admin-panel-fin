@@ -41,4 +41,8 @@ public class MessageKeyboardButtonService {
         return (int) repository.count();
     }
 
+    public MessageKeyboardButton findByLabel(String label) {
+        return this.repository.findMessageKeyboardButtonByLabel(label)
+                .orElse(null);
+    }
 }

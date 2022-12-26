@@ -25,6 +25,10 @@ public class PrincipalService {
         return repository.findById(id);
     }
 
+    public Optional<Principal> findByUsername(String username) {
+        return repository.findPrincipalByUsername(username);
+    }
+
     public Principal update(Principal entity) {
         return repository.save(entity);
     }

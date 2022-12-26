@@ -16,7 +16,6 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -28,8 +27,12 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.data.service.MessageKeyboardButtonService;
+import tg.bot.admin.panel.data.service.MessageResponseTemplateService;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.DefaultValueProviders;
+import tg.bot.admin.panel.views.a.util.converter.StringToButtonsConverter;
+import tg.bot.admin.panel.views.a.util.converter.StringToMessageTemplateConverter;
 import tg.bot.domain.entity.MessageKeyboard;
 import tg.bot.admin.panel.data.service.MessageKeyboardService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -44,8 +47,10 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
     private final String MESSAGEKEYBOARD_EDIT_ROUTE_TEMPLATE = "messageKeyboard/%s/edit";
 
     private final Grid<MessageKeyboard> grid = new Grid<>(MessageKeyboard.class, false);
+    private final MessageResponseTemplateService messageTemplateService;
+    private final MessageKeyboardButtonService messageKeyBoardButtonService;
 
-    private TextField templateId;
+    private TextField template;
     private TextField version;
     private TextField buttons;
     private Checkbox isActive;
@@ -59,7 +64,9 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
 
     private final MessageKeyboardService messageKeyboardService;
 
-    public MessageKeyboardView(MessageKeyboardService messageKeyboardService) {
+    public MessageKeyboardView(MessageResponseTemplateService messageTemplateService, MessageKeyboardButtonService messageKeyBoardButtonService, MessageKeyboardService messageKeyboardService) {
+        this.messageTemplateService = messageTemplateService;
+        this.messageKeyBoardButtonService = messageKeyBoardButtonService;
         this.messageKeyboardService = messageKeyboardService;
         addClassNames("message-keyboard-view");
 
@@ -110,10 +117,19 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
         binder = new BeanValidationBinder<>(MessageKeyboard.class);
 
         // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(templateId).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("templateId");
+        //    private TextField template;
+        //    private TextField version;
+        //    private TextField buttons;
+        //    private Checkbox isActive;
+        binder.forField(template)
+                .withConverter(new StringToMessageTemplateConverter(this.messageTemplateService))
+                .bind(MessageKeyboard::getMessageResponseTemplate, MessageKeyboard::setMessageResponseTemplate);
+        binder.bind(version,"version");
+        binder.forField(buttons).withConverter(new StringToButtonsConverter(this.messageKeyBoardButtonService))
+                .bind(MessageKeyboard::getButtons, MessageKeyboard::setButtons);
+        binder.bind(isActive, "isActive");
 
-        binder.bindInstanceFields(this);
+//        binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -166,11 +182,11 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        templateId = new TextField("Template Id");
+        template = new TextField("Template Id");
         version = new TextField("Version");
         buttons = new TextField("Buttons");
         isActive = new Checkbox("Is Active");
-        formLayout.add(templateId, version, buttons, isActive);
+        formLayout.add(template, version, buttons, isActive);
 
         editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);
