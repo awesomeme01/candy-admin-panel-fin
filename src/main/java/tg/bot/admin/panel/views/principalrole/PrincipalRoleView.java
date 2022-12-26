@@ -72,6 +72,7 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
                 .setHeader(ColumnNames.NAME)
                 .setAutoWidth(true);
         grid.addColumn(pr -> pr.getPrincipal().getUsername())
+                .setHeader(ColumnNames.PRINCIPAL)
                 .setAutoWidth(true);
         grid.setItems(query -> principalRoleService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
