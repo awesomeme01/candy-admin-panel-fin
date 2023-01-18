@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import tg.bot.admin.panel.data.service.ClientService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.core.domain.Client;
 import tg.bot.core.domain.base.AbstractAuditableEntity;
@@ -108,6 +109,10 @@ public class ClientsView extends Div implements BeforeEnterObserver {
                                 : "var(--lumo-disabled-text-color)");
 
         grid.addColumn(importantRenderer).setHeader("Important").setAutoWidth(true);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.clientService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
 
         grid.setItems(query -> clientService.list(
                 PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))

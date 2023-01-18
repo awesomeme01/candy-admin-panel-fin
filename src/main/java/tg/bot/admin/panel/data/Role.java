@@ -1,5 +1,5 @@
 package tg.bot.admin.panel.data;
 
 public enum Role {
-    USER, ADMIN;
+    USER, ADMIN, MAINTAINER, COURIER;
 }

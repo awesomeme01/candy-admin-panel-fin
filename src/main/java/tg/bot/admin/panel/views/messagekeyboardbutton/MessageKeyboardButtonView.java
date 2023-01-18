@@ -4,6 +4,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -29,9 +30,12 @@ import javax.annotation.security.RolesAllowed;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import tg.bot.admin.panel.data.service.MessageKeyboardService;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.converter.StringToMessageKeyboardConverter;
+import tg.bot.domain.entity.MessageKeyboard;
 import tg.bot.domain.entity.MessageKeyboardButton;
 import tg.bot.admin.panel.data.service.MessageKeyboardButtonService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -48,7 +52,7 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
     private final Grid<MessageKeyboardButton> grid = new Grid<>(MessageKeyboardButton.class, false);
     private final MessageKeyboardService messageKeyboardService;
 
-    private TextField keyboard;
+    private ComboBox<MessageKeyboard> keyboard;
     private TextField label;
     private TextField url;
     private Checkbox isActive;
@@ -80,7 +84,7 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
         grid.addColumn(MessageKeyboardButton::getId)
                 .setHeader(ColumnNames.ID)
                 .setAutoWidth(true);
-        grid.addColumn(c -> c.getKeyboard().getId())
+        grid.addColumn(c -> c.getKeyboard() != null ? String.format("[%s] %s", c.getKeyboard().getId(), c.getKeyboard().getMessageResponseTemplate().getMessage()) : null)
                 .setHeader("Keyboard Id")
                 .setAutoWidth(true);
         grid.addColumn(MessageKeyboardButton::getLabel)
@@ -97,7 +101,10 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
                                 : "var(--lumo-disabled-text-color)");
 
         grid.addColumn(isActiveRenderer).setHeader("Is Active").setAutoWidth(true);
-
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.messageKeyboardButtonService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> messageKeyboardButtonService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -121,9 +128,7 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
         //    private TextField label;
         //    private TextField url;
         //    private Checkbox isActive;
-        binder.forField(keyboard)
-                .withConverter(new StringToMessageKeyboardConverter(this.messageKeyboardService))
-                .bind(MessageKeyboardButton::getKeyboard, MessageKeyboardButton::setKeyboard);
+        binder.bind(this.keyboard, "keyboard");
         binder.bind(label, "label");
         binder.bind(url, "url");
         binder.bind(isActive, "isActive");
@@ -182,7 +187,9 @@ public class MessageKeyboardButtonView extends Div implements BeforeEnterObserve
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        keyboard = new TextField("Keyboard Id");
+        keyboard = new ComboBox<>("Keyboard and Template");
+        keyboard.setItems(this.messageKeyboardService.list(Pageable.unpaged()).toList());
+        keyboard.setItemLabelGenerator(k -> String.format("[%s] %s", k.getId(), k.getMessageResponseTemplate().getMessage()));
         label = new TextField("Label");
         url = new TextField("Url");
         isActive = new Checkbox("Is Active");

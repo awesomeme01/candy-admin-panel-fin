@@ -1,7 +1,5 @@
 package tg.bot.admin.panel.security;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -9,34 +7,34 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import tg.bot.admin.panel.data.entity.User;
-import tg.bot.admin.panel.data.repository.UserRepository;
+import tg.bot.admin.panel.data.service.PrincipalService;
+import tg.bot.core.domain.Principal;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final PrincipalService principalService;
 
     @Autowired
-    public UserDetailsServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserDetailsServiceImpl(PrincipalService principalService) {
+        this.principalService = principalService;
+    }
+
+    private static List<GrantedAuthority> getAuthorities(Principal principal) {
+        return principal.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRole()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("No user present with username: " + username);
-        } else {
-            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getHashedPassword(),
-                    getAuthorities(user));
-        }
-    }
+        Principal principal = principalService.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("No user present with username: " + username));
 
-    private static List<GrantedAuthority> getAuthorities(User user) {
-        return user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
 
+        return new org.springframework.security.core.userdetails.User(principal.getUsername(), principal.getPassword(), principal.getIsActive(), true, true, principal.getIsActive(), getAuthorities(principal));
     }
 
 }

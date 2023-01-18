@@ -26,6 +26,7 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.core.domain.Brand;
 import tg.bot.admin.panel.data.service.BrandService;
@@ -82,6 +83,10 @@ public class BrandsView extends Div implements BeforeEnterObserver {
         grid.addColumn(AbstractAuditableEntity::getDateCreated)
                 .setHeader(ColumnNames.DATE_CREATED)
                 .setAutoWidth(true);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.brandService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> brandService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());

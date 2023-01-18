@@ -27,7 +27,7 @@ public class DefaultValueProviders {
     public static String buttonNamesCombine(List<MessageKeyboardButton> messageKeyboardButtons) {
         return messageKeyboardButtons.stream().map(MessageKeyboardButton::getLabel)
                 .reduce((a, b) -> "" + a + "," + b)
-                .orElseThrow(() -> new IllegalArgumentException("Couldn't parse MessageKeyboardButtons.labels"));
+                .orElse(null);
     }
 
     public static ComponentRenderer<Span, Order> createStatusComponentRenderer() {

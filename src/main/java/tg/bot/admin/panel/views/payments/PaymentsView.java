@@ -3,6 +3,7 @@ package tg.bot.admin.panel.views.payments;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -25,11 +26,14 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import tg.bot.admin.panel.data.service.ClientService;
 import tg.bot.admin.panel.data.service.CurrencyService;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.converter.StringToClientConverter;
 import tg.bot.admin.panel.views.a.util.converter.StringToCurrencyConverter;
+import tg.bot.core.domain.Currency;
 import tg.bot.core.domain.Payment;
 import tg.bot.admin.panel.data.service.PaymentService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -47,7 +51,7 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
     private TextField user;
     private TextField orderId;
     private TextField amount;
-    private TextField currency;
+    private ComboBox<Currency> currency;
 
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
@@ -88,6 +92,10 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
         grid.addColumn(c -> c.getCurrency().getCode())
                 .setHeader(ColumnNames.CURRENCY)
                 .setAutoWidth(true);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.paymentService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> paymentService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -114,9 +122,7 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
         binder.forField(user)
                 .withConverter(new StringToClientConverter(this.clientService))
                 .bind(Payment::getClient, Payment::setClient);
-        binder.forField(currency)
-                .withConverter(new StringToCurrencyConverter(this.currencyService))
-                        .bind(Payment::getCurrency, Payment::setCurrency);
+        binder.bind(this.currency, "currency");
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -172,7 +178,9 @@ public class PaymentsView extends Div implements BeforeEnterObserver {
         user = new TextField(ColumnNames.CLIENT, "Enter username of client");
         orderId = new TextField(ColumnNames.ORDER_ID, "Enter order id");
         amount = new TextField(ColumnNames.AMOUNT, "Enter amount");
-        currency = new TextField(ColumnNames.CURRENCY, "Enter currency code");
+        currency = new ComboBox<>(ColumnNames.CURRENCY);
+        currency.setItems(this.currencyService.list(Pageable.unpaged()).toList());
+        currency.setItemLabelGenerator(Currency::getCode);
         formLayout.add(user, orderId, amount, currency);
 
         editorDiv.add(formLayout);

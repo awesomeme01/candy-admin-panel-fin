@@ -10,6 +10,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.core.domain.base.AbstractAuditableEntity;
 import tg.bot.domain.entity.MessageResponseTemplate;
@@ -41,7 +43,7 @@ public class MessageTemplateView extends Div implements BeforeEnterObserver {
 
     private TextField message;
     private TextField botRequestUrl;
-    private TextField response;
+    private TextArea response;
     private TextField lang;
     private TextField pattern;
 
@@ -72,20 +74,24 @@ public class MessageTemplateView extends Div implements BeforeEnterObserver {
                 .setHeader(ColumnNames.ID)
                 .setAutoWidth(true);
         grid.addColumn(MessageResponseTemplate::getMessage)
-                .setHeader(ColumnNames.MESSAGE)
+                .setHeader(ColumnNames.NAME)
                 .setAutoWidth(true);
         grid.addColumn(MessageResponseTemplate::getBotRequestUrl)
                 .setHeader(ColumnNames.BOT_REQUEST_URL)
                 .setAutoWidth(true);
         grid.addColumn(MessageResponseTemplate::getResponse)
                 .setHeader(ColumnNames.RESPONSE)
-                .setAutoWidth(true);
+                .setWidth("200px");
         grid.addColumn(MessageResponseTemplate::getLang)
                 .setHeader(ColumnNames.LANG)
                 .setAutoWidth(true);
         grid.addColumn(MessageResponseTemplate::getPattern)
                 .setHeader(ColumnNames.PATERN)
                 .setAutoWidth(true);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.messageResponseTemplateService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> messageResponseTemplateService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -161,9 +167,9 @@ public class MessageTemplateView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        message = new TextField("Message");
+        message = new TextField("Name");
         botRequestUrl = new TextField("Bot Request Url");
-        response = new TextField("Response");
+        response = this.buildTextAreaForResponse();
         lang = new TextField("Lang");
         pattern = new TextField("Pattern");
         formLayout.add(message, botRequestUrl, response, lang, pattern);
@@ -172,6 +178,15 @@ public class MessageTemplateView extends Div implements BeforeEnterObserver {
         createButtonLayout(editorLayoutDiv);
 
         splitLayout.addToSecondary(editorLayoutDiv);
+    }
+
+    private TextArea buildTextAreaForResponse() {
+        TextArea textArea = new TextArea();
+        textArea.setWidthFull();
+        textArea.setMinHeight("100px");
+        textArea.setMaxHeight("250px");
+        textArea.setLabel("Response");
+        return textArea;
     }
 
     private void createButtonLayout(Div editorLayoutDiv) {

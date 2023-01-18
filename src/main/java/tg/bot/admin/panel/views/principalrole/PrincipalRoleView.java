@@ -3,14 +3,19 @@ package tg.bot.admin.panel.views.principalrole;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -18,17 +23,22 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import java.util.Optional;
-
-import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import tg.bot.admin.panel.data.service.PrincipalService;
-import tg.bot.admin.panel.views.a.util.ColumnNames;
-import tg.bot.admin.panel.views.a.util.converter.StringToPrincipalConverter;
-import tg.bot.core.domain.PrincipalRole;
+import org.springframework.data.domain.Pageable;
+import tg.bot.admin.panel.data.Role;
 import tg.bot.admin.panel.data.service.PrincipalRoleService;
+import tg.bot.admin.panel.data.service.PrincipalService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
+import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.core.domain.Principal;
+import tg.bot.core.domain.PrincipalRole;
+
+import javax.annotation.security.RolesAllowed;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @PageTitle("Principal Role")
 @Route(value = "principalRole/:principalRoleID?/:action?(edit)", layout = MainLayout.class)
@@ -40,18 +50,13 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
 
     private final Grid<PrincipalRole> grid = new Grid<>(PrincipalRole.class, false);
     private final PrincipalService principalService;
-
-    private TextField role;
-    private TextField principal;
-
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
-
     private final BeanValidationBinder<PrincipalRole> binder;
-
-    private PrincipalRole principalRole;
-
     private final PrincipalRoleService principalRoleService;
+    private Select<String> role;
+    private ComboBox<Principal> principal;
+    private PrincipalRole principalRole;
 
     @Autowired
     public PrincipalRoleView(PrincipalService principalService, PrincipalRoleService principalRoleService) {
@@ -74,6 +79,10 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
         grid.addColumn(pr -> pr.getPrincipal().getUsername())
                 .setHeader(ColumnNames.PRINCIPAL)
                 .setAutoWidth(true);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.principalRoleService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> principalRoleService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -95,9 +104,7 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
         // Bind fields. This is where you'd define e.g. validation rules
 
 //        binder.bindInstanceFields(this);
-        binder.forField(principal)
-                        .withConverter(new StringToPrincipalConverter(this.principalService))
-                                .bind(PrincipalRole::getPrincipal, PrincipalRole::setPrincipal);
+        binder.bind(principal, "principal");
         binder.bind(role, "role");
 
         cancel.addClickListener(e -> {
@@ -151,8 +158,13 @@ public class PrincipalRoleView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        role = new TextField("Role");
-        principal = new TextField("Principal");
+        role = new Select<>();
+        role.setItems(Arrays.stream(Role.values()).map(Enum::name).collect(Collectors.toList()));
+        role.setItemLabelGenerator(Object::toString);
+        role.setLabel("Role");
+        principal = new ComboBox<>("Principal");
+        principal.setItems(this.principalService.list(Pageable.unpaged()).toList());
+        principal.setItemLabelGenerator(Principal::getUsername);
         formLayout.add(role, principal);
 
         editorDiv.add(formLayout);

@@ -3,6 +3,7 @@ package tg.bot.admin.panel.views.currency;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -23,10 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import tg.bot.admin.panel.data.service.CurrencyService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.converter.StringToMoneyTypeConverter;
 import tg.bot.core.domain.Currency;
 import tg.bot.core.domain.base.AbstractAuditableEntity;
+import tg.bot.core.domain.enums.MoneyType;
 
 import javax.annotation.security.RolesAllowed;
 import java.util.Optional;
@@ -46,7 +49,7 @@ public class CurrencyView extends Div implements BeforeEnterObserver {
     private final CurrencyService currencyService;
     private TextField name;
     private TextField code;
-    private TextField type;
+    private ComboBox<MoneyType> type;
     private TextField amountInUsd;
     private Currency currency;
 
@@ -80,6 +83,10 @@ public class CurrencyView extends Div implements BeforeEnterObserver {
                 .setHeader(ColumnNames.AMOUNT_IN_USD)
                 .setAutoWidth(true);
         grid.addColumn(AbstractAuditableEntity::getDateCreated).setAutoWidth(true);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.currencyService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> currencyService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -107,8 +114,7 @@ public class CurrencyView extends Div implements BeforeEnterObserver {
 //        private TextField amountInUsd;
         binder.bind(name, "name");
         binder.bind(code, "code");
-        binder.forField(type).withConverter(new StringToMoneyTypeConverter())
-                .bind(Currency::getType, Currency::setType);
+        binder.bind(type, "type");
 //        binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
@@ -163,7 +169,9 @@ public class CurrencyView extends Div implements BeforeEnterObserver {
         FormLayout formLayout = new FormLayout();
         name = new TextField("Name");
         code = new TextField("Code");
-        type = new TextField("Type");
+        type = new ComboBox<>("Type");
+        type.setItems(MoneyType.values());
+        type.setItemLabelGenerator(Enum::name);
         amountInUsd = new TextField("Amount In Usd");
         formLayout.add(name, code, type, amountInUsd);
 

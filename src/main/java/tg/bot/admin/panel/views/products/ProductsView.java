@@ -3,6 +3,7 @@ package tg.bot.admin.panel.views.products;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -27,8 +28,11 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import tg.bot.admin.panel.data.service.BrandService;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.core.domain.Brand;
 import tg.bot.core.domain.Product;
 import tg.bot.admin.panel.data.service.ProductService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -47,7 +51,7 @@ public class ProductsView extends Div implements BeforeEnterObserver {
 
     private TextField name;
     private TextField code;
-    private TextField brand;
+    private ComboBox<Brand> brand;
     private TextField description;
     private TextField price;
     private DateTimePicker dateCreated;
@@ -98,7 +102,10 @@ public class ProductsView extends Div implements BeforeEnterObserver {
         grid.addColumn(AbstractAuditableEntity::getDateCreated)
                 .setHeader(ColumnNames.DATE_CREATED)
                 .setAutoWidth(true);
-
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.productService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> productService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -123,9 +130,7 @@ public class ProductsView extends Div implements BeforeEnterObserver {
 //        binder.bindInstanceFields(this);
         binder.bind(this.name, "name");
         binder.bind(this.code, "code");
-        binder.forField(this.brand)
-                .withConverter(new StringToBrandConverter(this.brandService))
-                .bind(Product::getBrand, Product::setBrand);
+        binder.bind(this.brand, "brand");
         binder.bind(this.description, "description");
         binder.forField(this.price)
                 .withConverter(new StringToDoubleConverter("Price must be double!"))
@@ -185,7 +190,9 @@ public class ProductsView extends Div implements BeforeEnterObserver {
         FormLayout formLayout = new FormLayout();
         name = new TextField("Name");
         code = new TextField("Code");
-        brand = new TextField("Brand");
+        brand = new ComboBox<>("Brand");
+        brand.setItems(this.brandService.list(Pageable.unpaged()).toList());
+        brand.setItemLabelGenerator(Brand::getName);
         description = new TextField("Description");
         price = new TextField("Price");
         dateCreated = new DateTimePicker("Date Created");

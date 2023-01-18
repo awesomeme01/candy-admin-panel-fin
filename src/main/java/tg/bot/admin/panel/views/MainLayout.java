@@ -11,7 +11,6 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.router.PageTitle;
@@ -24,7 +23,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.ObjectUtils;
 import tg.bot.admin.panel.components.appnav.AppNav;
 import tg.bot.admin.panel.components.appnav.AppNavItem;
-import tg.bot.admin.panel.data.entity.User;
 import tg.bot.admin.panel.security.AuthenticatedUser;
 import tg.bot.admin.panel.views.booking.BookingView;
 import tg.bot.admin.panel.views.brands.BrandsView;
@@ -39,6 +37,7 @@ import tg.bot.admin.panel.views.principal.PrincipalView;
 import tg.bot.admin.panel.views.principalrole.PrincipalRoleView;
 import tg.bot.admin.panel.views.products.ProductsView;
 import tg.bot.admin.panel.views.sellingitem.SellingItemView;
+import tg.bot.core.domain.Principal;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -47,8 +46,8 @@ public class MainLayout extends AppLayout {
 
     private H2 viewTitle;
 
-    private AuthenticatedUser authenticatedUser;
-    private AccessAnnotationChecker accessChecker;
+    private final AuthenticatedUser authenticatedUser;
+    private final AccessAnnotationChecker accessChecker;
 
     public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker) {
         this.authenticatedUser = authenticatedUser;
@@ -157,11 +156,11 @@ public class MainLayout extends AppLayout {
     private Footer createFooter() {
         Footer layout = new Footer();
 
-        Optional<User> maybeUser = authenticatedUser.get();
+        Optional<Principal> maybeUser = authenticatedUser.get();
         if (maybeUser.isPresent()) {
-            User user = maybeUser.get();
+            Principal user = maybeUser.get();
 
-            Avatar avatar = new Avatar(user.getName());
+            Avatar avatar = new Avatar(user.getUsername());
             var picture = user.getProfilePicture();
             if (ObjectUtils.isNotEmpty(picture)) {
                 StreamResource resource = new StreamResource("profile-pic",
@@ -177,7 +176,7 @@ public class MainLayout extends AppLayout {
             MenuItem userName = userMenu.addItem("");
             Div div = new Div();
             div.add(avatar);
-            div.add(user.getName());
+            div.add(user.getUsername());
             div.add(new Icon("lumo", "dropdown"));
             div.getElement().getStyle().set("display", "flex");
             div.getElement().getStyle().set("align-items", "center");

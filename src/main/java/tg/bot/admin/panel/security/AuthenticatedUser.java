@@ -10,17 +10,18 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Component;
-import tg.bot.admin.panel.data.entity.User;
-import tg.bot.admin.panel.data.repository.UserRepository;
+import tg.bot.admin.panel.configuration.SecurityConfiguration;
+import tg.bot.admin.panel.data.service.PrincipalService;
+import tg.bot.core.domain.Principal;
 
 @Component
 public class AuthenticatedUser {
 
-    private final UserRepository userRepository;
+    private final PrincipalService principalService;
 
     @Autowired
-    public AuthenticatedUser(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public AuthenticatedUser(PrincipalService principalService) {
+        this.principalService = principalService;
     }
 
     private Optional<Authentication> getAuthentication() {
@@ -29,8 +30,8 @@ public class AuthenticatedUser {
                 .filter(authentication -> !(authentication instanceof AnonymousAuthenticationToken));
     }
 
-    public Optional<User> get() {
-        return getAuthentication().map(authentication -> userRepository.findByUsername(authentication.getName()));
+    public Optional<Principal> get() {
+        return getAuthentication().flatMap(authentication -> principalService.findByUsername(authentication.getName()));
     }
 
     public void logout() {

@@ -13,6 +13,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
@@ -22,15 +23,16 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import java.util.Optional;
-
-import javax.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import tg.bot.admin.panel.views.a.util.ColumnNames;
-import tg.bot.core.domain.Principal;
 import tg.bot.admin.panel.data.service.PrincipalService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
+import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.core.domain.Principal;
+
+import javax.annotation.security.RolesAllowed;
+import java.util.Optional;
 
 @PageTitle("Principal")
 @Route(value = "principal/:principalID?/:action?(edit)", layout = MainLayout.class)
@@ -42,19 +44,14 @@ public class PrincipalView extends Div implements BeforeEnterObserver {
     private final String PRINCIPAL_EDIT_ROUTE_TEMPLATE = "principal/%s/edit";
 
     private final Grid<Principal> grid = new Grid<>(Principal.class, false);
-
-    private TextField username;
-    private TextField password;
-    private Checkbox isActive;
-
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
-
     private final BeanValidationBinder<Principal> binder;
-
-    private Principal principal;
-
     private final PrincipalService principalService;
+    private TextField username;
+    private PasswordField password;
+    private Checkbox isActive;
+    private Principal principal;
 
     @Autowired
     public PrincipalView(PrincipalService principalService) {
@@ -87,7 +84,10 @@ public class PrincipalView extends Div implements BeforeEnterObserver {
                                 : "var(--lumo-disabled-text-color)");
 
         grid.addColumn(isActiveRenderer).setHeader("Is Active").setAutoWidth(true);
-
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.principalService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> principalService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -161,7 +161,7 @@ public class PrincipalView extends Div implements BeforeEnterObserver {
 
         FormLayout formLayout = new FormLayout();
         username = new TextField("Username");
-        password = new TextField("Password");
+        password = getPasswordField();
         isActive = new Checkbox("Is Active");
         formLayout.add(username, password, isActive);
 
@@ -169,6 +169,13 @@ public class PrincipalView extends Div implements BeforeEnterObserver {
         createButtonLayout(editorLayoutDiv);
 
         splitLayout.addToSecondary(editorLayoutDiv);
+    }
+
+    private PasswordField getPasswordField() {
+        PasswordField passwordField = new PasswordField();
+        passwordField.setLabel("Password");
+        passwordField.setRevealButtonVisible(false);
+        return passwordField;
     }
 
     private void createButtonLayout(Div editorLayoutDiv) {

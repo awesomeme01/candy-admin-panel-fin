@@ -1,4 +1,4 @@
-package tg.bot.admin.panel.security;
+package tg.bot.admin.panel.configuration;
 
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import org.springframework.context.annotation.Bean;

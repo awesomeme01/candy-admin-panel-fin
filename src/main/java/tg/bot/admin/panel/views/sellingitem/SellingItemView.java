@@ -3,6 +3,7 @@ package tg.bot.admin.panel.views.sellingitem;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -37,9 +38,12 @@ import javax.annotation.security.RolesAllowed;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import tg.bot.admin.panel.data.service.BookingService;
 import tg.bot.admin.panel.data.service.ProductService;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
+import tg.bot.core.domain.Product;
 import tg.bot.core.domain.SellingItem;
 import tg.bot.admin.panel.data.service.SellingItemService;
 import tg.bot.admin.panel.views.MainLayout;
@@ -59,7 +63,7 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
 
     private Upload picture;
     private Image picturePreview;
-    private TextField product;
+    private ComboBox<Product> product;
     private TextField bookedBy;
     private TextField weight;
     private TextField price;
@@ -120,7 +124,10 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
         grid.addColumn(AbstractAuditableEntity::getDateCreated)
                 .setHeader(ColumnNames.DATE_CREATED)
                 .setAutoWidth(true);
-
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.sellingItemService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> sellingItemService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -140,11 +147,9 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
         binder = new BeanValidationBinder<>(SellingItem.class);
 
 //        binder.bindInstanceFields(this);
-        binder.forField(this.product)
-                .withConverter(new StringToProductConverter(productService))
-                .bind(SellingItem::getProduct, SellingItem::setProduct);
+        binder.bind(this.product, "product");
         binder.forField(this.bookedBy)
-                .withNullRepresentation("Available")
+                .withNullRepresentation("Id will appear when booked by someone")
                 .withConverter(new StringToBookingConverter(bookingService))
                 .bind(SellingItem::getBooking, SellingItem::setBooking);
         binder.forField(this.weight)
@@ -215,8 +220,11 @@ public class SellingItemView extends Div implements BeforeEnterObserver {
         picture = new Upload();
         picture.getStyle().set("box-sizing", "border-box");
         picture.getElement().appendChild(picturePreview.getElement());
-        product = new TextField("Product", "Enter product code");
-        bookedBy = new TextField("Booking Id", "Enter booking id");
+        product = new ComboBox<>("Product");
+        product.setItems(this.productService.list(Pageable.unpaged()).toList());
+        product.setItemLabelGenerator(Product::getCode);
+        bookedBy = new TextField("Booking Id");
+        bookedBy.setReadOnly(true);
         weight = new TextField("Weight");
         price = new TextField("Price");
         dateCreated = new DateTimePicker("Date Created");

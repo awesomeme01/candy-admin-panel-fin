@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import tg.bot.admin.panel.data.service.ClientService;
 import tg.bot.admin.panel.data.service.SellingItemService;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.DefaultValueProviders;
 import tg.bot.admin.panel.views.a.util.converter.StringToClientConverter;
@@ -88,6 +89,10 @@ public class BookingView extends Div implements BeforeEnterObserver {
         grid.addColumn(AbstractAuditableEntity::getDateCreated)
                 .setAutoWidth(true)
                 .setHeader(ColumnNames.DATE_CREATED);
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.bookingService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> bookingService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());

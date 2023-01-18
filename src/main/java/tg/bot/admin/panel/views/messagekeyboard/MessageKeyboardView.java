@@ -4,6 +4,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -27,8 +28,10 @@ import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import tg.bot.admin.panel.data.service.MessageKeyboardButtonService;
 import tg.bot.admin.panel.data.service.MessageResponseTemplateService;
+import tg.bot.admin.panel.views.a.util.ButtonUtil;
 import tg.bot.admin.panel.views.a.util.ColumnNames;
 import tg.bot.admin.panel.views.a.util.DefaultValueProviders;
 import tg.bot.admin.panel.views.a.util.converter.StringToButtonsConverter;
@@ -36,6 +39,7 @@ import tg.bot.admin.panel.views.a.util.converter.StringToMessageTemplateConverte
 import tg.bot.domain.entity.MessageKeyboard;
 import tg.bot.admin.panel.data.service.MessageKeyboardService;
 import tg.bot.admin.panel.views.MainLayout;
+import tg.bot.domain.entity.MessageResponseTemplate;
 
 @PageTitle("Message Keyboard")
 @Route(value = "messageKeyboard/:messageKeyboardID?/:action?(edit)", layout = MainLayout.class)
@@ -50,7 +54,7 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
     private final MessageResponseTemplateService messageTemplateService;
     private final MessageKeyboardButtonService messageKeyBoardButtonService;
 
-    private TextField template;
+    private ComboBox<MessageResponseTemplate> template;
     private TextField version;
     private TextField buttons;
     private Checkbox isActive;
@@ -79,8 +83,8 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn(m -> m.getMessageResponseTemplate().getId())
-                .setHeader("Template ID")
+        grid.addColumn(m -> m.getMessageResponseTemplate().getMessage())
+                .setHeader("Template Name")
                 .setAutoWidth(true);
         grid.addColumn(MessageKeyboard::getVersion)
                 .setHeader(ColumnNames.VERSION)
@@ -97,7 +101,10 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
                                 : "var(--lumo-disabled-text-color)");
 
         grid.addColumn(isActiveRenderer).setHeader("Is Active").setAutoWidth(true);
-
+        grid.addComponentColumn(item -> ButtonUtil.defaultDeleteFromGrid(click -> {
+            this.messageKeyboardService.delete(item.getId());
+            refreshGrid();
+        })).setWidth("140px").setFlexGrow(0).setHeader("Actions");
         grid.setItems(query -> messageKeyboardService.list(
                         PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
@@ -121,9 +128,7 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
         //    private TextField version;
         //    private TextField buttons;
         //    private Checkbox isActive;
-        binder.forField(template)
-                .withConverter(new StringToMessageTemplateConverter(this.messageTemplateService))
-                .bind(MessageKeyboard::getMessageResponseTemplate, MessageKeyboard::setMessageResponseTemplate);
+        binder.bind(this.template, "messageResponseTemplate");
         binder.bind(version,"version");
         binder.forField(buttons).withConverter(new StringToButtonsConverter(this.messageKeyBoardButtonService))
                 .bind(MessageKeyboard::getButtons, MessageKeyboard::setButtons);
@@ -182,7 +187,9 @@ public class MessageKeyboardView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        template = new TextField("Template Id");
+        template = new ComboBox<>("Template Name");
+        template.setItems(this.messageTemplateService.list(Pageable.unpaged()).toList());
+        template.setItemLabelGenerator(MessageResponseTemplate::getMessage);
         version = new TextField("Version");
         buttons = new TextField("Buttons");
         isActive = new Checkbox("Is Active");

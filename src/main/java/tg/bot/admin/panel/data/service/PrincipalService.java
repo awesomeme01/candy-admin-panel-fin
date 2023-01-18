@@ -5,9 +5,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import tg.bot.admin.panel.data.repository.PrincipalRepository;
 import tg.bot.core.domain.Principal;
 
@@ -15,10 +14,12 @@ import tg.bot.core.domain.Principal;
 public class PrincipalService {
 
     private final PrincipalRepository repository;
+    private final PasswordEncoder encoder;
 
     @Autowired
-    public PrincipalService(PrincipalRepository repository) {
+    public PrincipalService(PrincipalRepository repository, PasswordEncoder encoder) {
         this.repository = repository;
+        this.encoder = encoder;
     }
 
     public Optional<Principal> get(Long id) {
@@ -30,6 +31,7 @@ public class PrincipalService {
     }
 
     public Principal update(Principal entity) {
+        entity.setPassword(encoder.encode(entity.getPassword()));
         return repository.save(entity);
     }
 
